@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'">
+<title>Анкета интересов · Influency Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000; --card:#141417; --card2:#1c1c20;
+  --orange:#E5820A; --orange-soft:#f0a23f; --white:#fff; --muted:#8a8a90;
+  --green:#5bd17a; --red:#ff5a5a; --line:#262629;
+  --shadow:0 30px 80px -30px rgba(229,130,10,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:100px}
+body{background:var(--bg);color:var(--white);font-family:'Manrope',sans-serif;
+  min-height:100vh;overflow-x:hidden;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.05;z-index:9999;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── загрузчик ── */
+.loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;z-index:10001;transition:opacity .5s}
+.loader.hide{opacity:0;pointer-events:none}
+.loader .ring{width:46px;height:46px;border:3px solid var(--card);border-top-color:var(--orange);
+  border-radius:50%;animation:sp .8s linear infinite}
+.loader p{color:var(--muted);font-size:14px;max-width:270px;text-align:center;line-height:1.5}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── шапка ── */
+.chrome-top{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;justify-content:center;
+  padding:14px;padding-top:calc(14px + env(safe-area-inset-top,0px));
+  background:linear-gradient(180deg,rgba(0,0,0,.9),transparent);pointer-events:none}
+.chrome-top a{pointer-events:auto;opacity:.85;transition:opacity .2s,transform .2s;display:block}
+.chrome-top a:hover{opacity:1;transform:translateY(1px)}
+.chrome-top img{height:42px;display:block}
+
+/* ── нижняя плашка ── */
+.chrome-bottom{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;align-items:center;
+  justify-content:center;gap:20px;padding:12px;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(0deg,rgba(0,0,0,.94) 55%,transparent)}
+.chrome-bottom a{color:#9a9aa0;transition:color .2s,transform .2s;display:inline-flex}
+.chrome-bottom a:hover{color:var(--orange);transform:translateY(-2px)}
+.chrome-bottom svg{width:22px;height:22px;fill:currentColor}
+
+/* ── боковые бегущие строки ── */
+.rail{position:fixed;top:0;bottom:0;z-index:1;overflow:hidden;pointer-events:none;
+  width:clamp(58px,calc((100vw - 620px)/6),210px);transform:rotate(180deg)}
+.rail.l{left:0} .rail.r{right:0}
+.rail .track{writing-mode:vertical-rl;font-family:'Unbounded';font-weight:900;
+  font-size:clamp(20px,calc((100vw - 600px)/9),86px);letter-spacing:.02em;
+  color:rgba(255,255,255,.11);white-space:nowrap;text-transform:uppercase;
+  line-height:clamp(58px,calc((100vw - 620px)/6),210px);
+  animation:roll 150s linear infinite;opacity:0;transition:opacity .6s}
+body.ready .rail .track{opacity:1}
+.rail.r .track{animation-duration:88s;color:rgba(229,130,10,.13)}
+@keyframes roll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@media (max-width:980px){
+  .rail{width:18px}
+  .rail .track{font-size:9.5px;font-weight:700;letter-spacing:.11em;line-height:18px;
+    color:rgba(255,255,255,.09);animation-duration:120s}
+  .rail.r .track{color:rgba(229,130,10,.11)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── каркас ── */
+.wrap{max-width:620px;margin:0 auto;padding:92px 18px 108px;position:relative;z-index:2}
+.wrap::before{content:"";position:absolute;width:760px;height:430px;top:-120px;right:-280px;
+  border-radius:50%;pointer-events:none;background:radial-gradient(ellipse,rgba(229,130,10,.15),transparent 70%)}
+
+/* ── прогресс ── */
+.progress{position:fixed;left:0;right:0;top:calc(68px + env(safe-area-inset-top,0px));
+  height:3px;background:rgba(255,255,255,.07);z-index:59;display:none}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--orange-soft));
+  transition:width .45s cubic-bezier(.4,0,.2,1)}
+.progress b{position:absolute;right:14px;top:9px;font-size:11px;font-weight:700;
+  color:var(--muted);font-family:'Unbounded';letter-spacing:.04em}
+
+/* ── экраны ── */
+.screen{display:none;animation:rise .5s both}
+.screen.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+h1{font-family:'Unbounded';font-weight:900;font-size:clamp(26px,7vw,40px);line-height:1.06;margin-bottom:16px}
+h1 em{font-style:normal;color:var(--orange)}
+.lead{color:var(--muted);font-size:15.5px;line-height:1.6;margin-bottom:12px}
+.hero{text-align:center;margin-bottom:34px}
+.hero .lead{max-width:430px;margin-left:auto;margin-right:auto}
+.meta{display:flex;justify-content:center;gap:26px;margin-top:26px;flex-wrap:wrap}
+.meta div{text-align:center}
+.meta b{display:block;font-family:'Unbounded';font-weight:800;font-size:21px;color:var(--orange)}
+.meta span{font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+
+/* ── карточка раздела ── */
+.sec{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+  border-radius:22px;padding:26px 22px;box-shadow:var(--shadow);margin-bottom:16px}
+.sec>h2{font-family:'Unbounded';font-weight:600;font-size:11px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--orange);margin-bottom:6px}
+.sec>.note{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px}
+
+/* ── поле ── */
+.f{margin-bottom:22px;scroll-margin-top:120px}
+.f:last-child{margin-bottom:0}
+.f>label{display:block;font-size:14.5px;font-weight:700;line-height:1.45;margin-bottom:4px}
+.f .req{color:var(--orange)}
+.f .hint{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:9px}
+.f input[type=text],.f textarea{width:100%;background:#000;border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;font-size:15px;color:var(--white);font-family:inherit;
+  outline:none;transition:border-color .18s}
+.f textarea{min-height:92px;resize:vertical;line-height:1.5}
+.f input[type=text]:focus,.f textarea:focus{border-color:var(--orange)}
+.f input[type=text]::placeholder,.f textarea::placeholder{color:#55555c}
+
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+.opt input{position:absolute;opacity:0;width:0;height:0}
+.opt span{display:block;padding:10px 15px;border:1px solid var(--line);border-radius:11px;
+  font-size:14px;line-height:1.3;cursor:pointer;background:#000;transition:all .16s;user-select:none}
+.opt span:hover{border-color:#3a3a40}
+.opt input:checked+span{border-color:var(--orange);background:rgba(229,130,10,.12);
+  color:var(--orange-soft);font-weight:600}
+.opt input:focus-visible+span{outline:2px solid var(--orange);outline-offset:2px}
+
+.f.bad>label{color:var(--red)}
+.f.bad input[type=text],.f.bad textarea{border-color:var(--red)}
+.f.bad .opts{outline:1px solid var(--red);outline-offset:6px;border-radius:12px}
+.err{display:none;font-size:12.5px;color:var(--red);margin-top:7px;font-weight:600}
+.f.bad .err{display:block}
+
+.tip{margin-top:10px}
+.tip>button{background:none;border:0;color:var(--orange);font:inherit;font-size:13px;
+  font-weight:700;cursor:pointer;padding:4px 0;border-bottom:1px dashed rgba(229,130,10,.5)}
+.tip ol{display:none;margin:12px 0 0;padding:14px 16px 14px 34px;background:#000;
+  border:1px solid var(--line);border-radius:12px;font-size:13.5px;line-height:1.65;color:#c9c9cf}
+.tip li{margin-bottom:6px}
+.tip.open ol{display:block}
+.tip .back{display:none;margin-top:10px;background:none;border:1px solid var(--line);
+  border-radius:10px;color:var(--white);font:inherit;font-size:13px;padding:9px 14px;cursor:pointer}
+.tip.open .back{display:inline-block}
+
+.consent{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:14px}
+.consent label{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:13.5px;
+  line-height:1.55;color:#c9c9cf}
+.consent input{appearance:none;flex:0 0 20px;width:20px;height:20px;margin-top:1px;
+  border:1.5px solid #3a3a40;border-radius:6px;background:#000;cursor:pointer;
+  transition:all .16s;position:relative}
+.consent input:checked{border-color:var(--orange);background:var(--orange)}
+.consent input:checked::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;
+  border:solid #000;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.consent input:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.consent.bad{border-color:var(--red)}
+a{color:var(--orange);text-decoration:underline;text-underline-offset:2px}
+
+.btn{width:100%;padding:17px;border:0;border-radius:14px;background:var(--orange);color:#000;
+  font-family:'Unbounded';font-weight:800;font-size:15px;letter-spacing:.03em;cursor:pointer;
+  transition:transform .14s,opacity .14s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--white);font-size:14px;padding:14px}
+.row{display:flex;gap:10px;margin-top:10px}
+.row .btn{flex:1}
+
+.gate{max-width:430px;margin:0 auto}
+.gate input{width:100%;background:#000;border:1px solid var(--line);border-radius:12px;padding:15px;
+  font-size:17px;color:var(--white);font-family:'Unbounded';letter-spacing:.14em;text-align:center;outline:none}
+.gate input:focus{border-color:var(--orange)}
+.msg{font-size:13.5px;line-height:1.55;margin-top:14px;min-height:20px}
+.msg.e{color:var(--red)} .msg.k{color:var(--green)}
+
+.linkbox{background:#000;border:1px solid var(--line);border-radius:12px;padding:13px 15px;
+  font-size:13px;color:var(--muted);word-break:break-all;margin:18px 0 10px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.sign{text-align:center;font-size:12px;color:#55555c;margin-top:30px}
+
+.saved{position:fixed;left:50%;bottom:64px;transform:translateX(-50%) translateY(12px);
+  background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:8px 18px;
+  font-size:12.5px;color:var(--muted);opacity:0;transition:all .3s;z-index:58;pointer-events:none}
+.saved.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="ring"></div>
+  <p>подожди, мы готовим для тебя кое-что полезное…</p>
+</div>
+
+<header class="chrome-top">
+  <a href="https://influencyhub.ru" target="_blank" rel="noopener noreferrer" title="influencyhub.ru">
+    <img src="./logo.png" alt="Influency Hub" onerror="this.style.display='none'">
+  </a>
+</header>
+
+<div class="rail l" aria-hidden="true"><div class="track" id="railL"></div></div>
+<div class="rail r" aria-hidden="true"><div class="track" id="railR"></div></div>
+
+<nav class="chrome-bottom">
+  <a href="https://t.me/influencyhub" target="_blank" rel="noopener noreferrer" title="Telegram">
+    <svg viewBox="0 0 24 24"><path d="M9.8 15.5l-.4 4c.6 0 .8-.2 1.1-.5l2.6-2.5 5.4 3.9c1 .6 1.7.3 2-.9l3.6-16.8c.3-1.4-.5-2-1.5-1.6L1.1 9.2C-.3 9.7-.3 10.5.9 10.9l5.4 1.7L18.8 4.9c.6-.4 1.1-.2.7.2"/></svg>
+  </a>
+  <a href="mailto:main@influencyhub.ru" title="Почта">
+    <svg viewBox="0 0 512 512"><path d="M464 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zm0 48v40.8c-22.4 18.3-58.2 46.7-134.6 106.5-16.8 13.2-50.2 45.1-73.4 44.7-23.2.4-56.6-31.5-73.4-44.7C106.2 199.5 70.4 171.1 48 152.8V112h416zM48 400V214.4c22.9 18.3 55.7 44.2 107.8 85 23.4 18.3 65 56.7 100.2 56.6 35-.1 76.2-38 100.2-56.6 52.1-40.8 84.9-66.7 107.8-85V400H48z"/></svg>
+  </a>
+  <a href="https://www.instagram.com/influencyhub.ru" target="_blank" rel="noopener noreferrer" title="Influency Hub">
+    <svg viewBox="0 0 100 100"><g transform="translate(50,50)"><ellipse cx="0" cy="-22" rx="9" ry="22"/><ellipse cx="0" cy="-22" rx="9" ry="22" transform="rotate(72)"/><ellipse cx="0" cy="-22" rx="9" ry="22" transform="rotate(144)"/><ellipse cx="0" cy="-22" rx="9" ry="22" transform="rotate(216)"/><ellipse cx="0" cy="-22" rx="9" ry="22" transform="rotate(288)"/></g></svg>
+  </a>
+</nav>
+
+<div class="progress" id="pg"><i id="pgBar"></i><b id="pgTxt"></b></div>
+
+<div class="wrap">
+
+  <!-- вход по коду -->
+  <div class="screen" id="scGate">
+    <div class="hero">
+      <h1>Анкета <em>интересов</em></h1>
+      <p class="lead">Чтобы мы находили для тебя проекты, от которых сложно отказаться, нам нужно знать чуть больше, чем ник и статистику.</p>
+    </div>
+    <div class="gate">
+      <p class="lead" style="text-align:center">Введи код из ссылки, которую прислал твой менеджер. Если ссылки нет — напиши ему, он пришлёт.</p>
+      <input id="gateCode" maxlength="24" placeholder="код анкеты" autocomplete="off" spellcheck="false" inputmode="latin">
+      <div class="msg e" id="gateMsg"></div>
+      <div class="row"><button class="btn" id="gateGo">Открыть</button></div>
+    </div>
+    <p class="sign">Сделано с любовью в <a href="https://influencyhub.ru" target="_blank" rel="noopener noreferrer">Influency Hub</a> · центр влияния</p>
+  </div>
+
+  <!-- проверка даты рождения -->
+  <div class="screen" id="scVerify">
+    <div class="hero"><h1>С <em>возвращением</em></h1></div>
+    <div class="gate">
+      <p class="lead" id="verifyLead" style="text-align:center"></p>
+      <input id="verifyDob" maxlength="10" placeholder="ДД.ММ.ГГГГ" inputmode="numeric" autocomplete="off">
+      <div class="msg e" id="verifyMsg"></div>
+      <div class="row"><button class="btn" id="verifyGo">Продолжить</button></div>
+      <div class="row"><button class="btn ghost" id="verifySkip">Заполнить заново</button></div>
+    </div>
+  </div>
+
+  <!-- доступ закрыт -->
+  <div class="screen" id="scLocked">
+    <div class="hero"><h1>Не можем <em>тебя проверить</em></h1></div>
+    <div class="gate">
+      <p class="lead" id="lockedMsg" style="text-align:center"></p>
+      <div class="row"><button class="btn" id="lockedAsk">Попросить доступ</button></div>
+      <div class="msg k" id="lockedDone"></div>
+    </div>
+  </div>
+
+  <!-- анкета -->
+  <div class="screen" id="scForm">
+    <div class="hero">
+      <h1 id="hello"></h1>
+      <p class="lead">Небольшая анкета, которая поможет нам лучше узнать тебя, твои интересы и возможности — и находить ещё больше идей для интересных проектов.</p>
+      <div class="meta">
+        <div><b>7</b><span>разделов</span></div>
+        <div><b>~10</b><span>минут</span></div>
+        <div><b>1</b><span>раз в год</span></div>
+      </div>
+    </div>
+    <div id="body"></div>
+
+    <div class="consent" id="consentBox">
+      <label>
+        <input type="checkbox" id="consent">
+        <span>Нажимая на кнопку «ТЫК», ты даёшь <a id="lkConsent" target="_blank" rel="noopener noreferrer">согласие</a> на обработку персональных данных в целях подбора рекламных проектов и формирования предложений рекламодателям. Подробнее об обработке данных в <a id="lkPrivacy" target="_blank" rel="noopener noreferrer">Политике</a>.</span>
+      </label>
+      <div class="err" id="consentErr">Без согласия мы не сможем принять анкету. Формальности, бюрократия, все дела...</div>
+    </div>
+
+    <button class="btn" id="send">ТЫК</button>
+    <div class="msg e" id="sendMsg"></div>
+  </div>
+
+  <!-- спасибо -->
+  <div class="screen" id="scDone">
+    <div class="hero">
+      <h1 id="thanks"></h1>
+      <p class="lead">Чем лучше мы тебя знаем, тем больше шансов, что к тебе придёт проект, от которого будет не отказаться.</p>
+      <p class="lead">Если что-то изменится — переедешь, изменишь привычки, сдашь на права, что угодно — открой эту же ссылку и поправь. Она будет твоим личным дневником.</p>
+    </div>
+    <div class="linkbox" id="myLink"></div>
+    <button class="btn ghost" id="copyLink">Скопировать ссылку</button>
+    <p class="sign">Сделано с любовью в <a href="https://influencyhub.ru" target="_blank" rel="noopener noreferrer">Influency Hub</a> · центр влияния</p>
+  </div>
+
+</div>
+
+<div class="saved" id="saved">Черновик сохранён</div>
+
+<script>
+/* ════════════ НАСТРОЙКИ ════════════
+   Здесь нет секретов. ENDPOINT — адрес веб-приложения Apps Script:
+   доступ к таблицам живёт на стороне Google, запись принимается
+   только по валидному токену. ID таблиц в этот файл не попадают
+   и попасть не должны.                                              */
+const CFG = {
+  ENDPOINT    : 'https://script.google.com/macros/s/AKfycbwr5YZnPuW9PueCC6wSN1nfl6pxMo4ErTDAfZI1TYNY0URicQsgYO63I5xR6Mm5Q1GA/exec',
+  CONSENT_URL : 'https://influencyhub.ru/soglasie',
+  PRIVACY_URL : 'https://influencyhub.ru/privacy',
+  DRAFT_DAYS  : 30
+};
+
+const RAIL_L = 'немного о тебе · спорт и увлечения · семья и окружение · транспорт · образ жизни · темы и интересы · возможности · ';
+const RAIL_R = 'ты – часть Influency Hub · строим медиапространство вместе · ювелиры контента · поделись важным · чщщщ, мы никому не расскажем · центр влияния · мы — одна команда · рады, что ты с нами · ';
+
+/* ════════════ СЛОВАРИ ════════════ */
+const D = {
+  yn      : ['Да','Нет'],
+  freq    : ['Реже раза в неделю','1–2 раза в неделю','3–4 раза в неделю','Почти каждый день'],
+  edu     : ['Среднее','Среднее специальное','Неоконченное высшее','Высшее','Два и более высших','Учёная степень'],
+  art     : ['Музыка и вокал','Танцы','Рисование','Фотография','Актёрское мастерство','Видеомонтаж','Рукоделие','Другое'],
+  kids    : ['0–3','4–7','8–12','13–17','18+'],
+  part    : ['Регулярно','Иногда','Разово','Нет','У меня нет партнёра','Предпочитаю не отвечать'],
+  rel     : ['Регулярно','Иногда','Разово','Нет'],
+  relP    : ['Регулярно','Иногда','Разово','Нет','Предпочитаю не отвечать'],
+  ynP     : ['Да','Нет','Предпочитаю не отвечать'],
+  pets    : ['Собака','Кошка','Грызун','Птица','Рептилия','Рыбы','Экзотическое животное','Другое'],
+  lic     : ['Да','Нет','Учусь в автошколе'],
+  food    : ['Без ограничений','Вегетарианство','Веганство','Без глютена','Без лактозы','Халяль','Кошер','Другое'],
+  stop    : ['Алкоголь','Табак и вейпы','Ставки и азартные игры','Микрозаймы и МФО','Медицина и клиники','Политика','Религия','БАДы и фарма','Пластическая хирургия','Криптовалюта','Эзотерика','Инфобизнес и курсы','Другое'],
+  topics  : ['Экология','Благотворительность','Помощь животным','Инклюзия и доступная среда','Образование и наука','Здоровье и ментальное здоровье','Спорт и ЗОЖ','Поддержка семьи и материнство','Гос. программы и городские инициативы','Культура и искусство','Технологии','Финансовая грамотность','Другое'],
+  soc     : ['Да, на любые из отмеченных','Только на некоторые','Нет'],
+  trip    : ['Да, по России','Да, включая зарубеж','Только свой регион','Только свой город','Нет'],
+  events  : ['Нет','Переезд','Ремонт','Путешествие','Обучение','Свадьба','Рождение ребёнка','Смена работы','Другое'],
+  stopHas : ['Да, есть','Нет, готов на всё']
+};
+
+/* ════════════ СХЕМА ════════════
+   id поля = заголовок столбца в таблице.                           */
+const SCHEMA = [
+{t:'Немного о тебе', f:[
+ {id:'Образование: уровень', q:'Какое у тебя образование?', ty:'radio', o:D.edu},
+ {id:'Образование: вуз и специальность', q:'Где учился и на кого?', ty:'text', h:'Вуз и специальность. Необязательно'},
+ {id:'Учится сейчас', q:'Учишься ли ты сейчас?', ty:'radio', o:D.yn, r:1},
+ {id:'Учится: где, направление, курс', q:'Где, на каком направлении и курсе?', ty:'text', r:1, s:{f:'Учится сейчас', eq:'Да'}},
+ {id:'Другая работа / бизнес', q:'Есть ли у тебя работа или свой бизнес помимо блога?', ty:'radio', o:D.yn, r:1},
+ {id:'Чем занимается помимо блога', q:'Чем занимаешься?', ty:'text', r:1, s:{f:'Другая работа / бизнес', eq:'Да'}}
+]},
+{t:'Спорт и увлечения', f:[
+ {id:'Занимается спортом', q:'Занимаешься ли ты спортом?', ty:'radio', o:D.yn, r:1},
+ {id:'Спорт: какой', q:'Каким именно?', ty:'text', r:1, s:{f:'Занимается спортом', eq:'Да'}},
+ {id:'Спорт: частота', q:'Как часто?', ty:'radio', o:D.freq, r:1, s:{f:'Занимается спортом', eq:'Да'}},
+ {id:'Разряд / достижения', q:'Есть ли разряд, достижения или опыт соревнований?', ty:'radio', o:D.yn},
+ {id:'Разряд: какие именно', q:'Расскажи подробнее', ty:'text', s:{f:'Разряд / достижения', eq:'Да'}},
+ {id:'Творческие увлечения', q:'Есть ли творческие увлечения?', ty:'radio', o:D.yn, r:1},
+ {id:'Творчество: какое именно', q:'Какие?', ty:'checks', o:D.art, r:1, s:{f:'Творческие увлечения', eq:'Да'}},
+ {id:'Творчество: другое', q:'Что именно?', ty:'text', r:1, s:{f:'Творчество: какое именно', has:'Другое'}},
+ {id:'Увлечения и хобби', q:'Чем ещё увлекаешься помимо спорта и творчества?', ty:'area',
+  h:'Всё, что приходит в голову, даже если кажется мелочью. Чем необычнее, тем лучше — из такого чаще всего и получаются самые классные проекты'}
+]},
+{t:'Семья и окружение', n:'Отвечай только на то, чем тебе комфортно делиться. Эти вопросы нужны, чтобы предлагать тебе проекты, где можно снимать с близкими — и не предлагать те, где это неуместно. Имена и точные возрасты близких мы не спрашиваем.', f:[
+ {id:'Дети', q:'Есть ли у тебя дети?', ty:'radio', o:D.ynP, r:1},
+ {id:'Дети: возрастные группы', q:'Сколько им примерно лет?', ty:'checks', o:D.kids, r:1, s:{f:'Дети', eq:'Да'}},
+ {id:'Партнёр: участие в съёмках', q:'Готов ли партнёр или супруг(а) иногда участвовать в съёмках?', ty:'radio', o:D.part, r:1},
+ {id:'Братья / сёстры', q:'Есть ли братья или сёстры?', ty:'radio', o:D.ynP, r:1},
+ {id:'Братья / сёстры: участие', q:'Готовы ли они участвовать в съёмках?', ty:'radio', o:D.rel, r:1, s:{f:'Братья / сёстры', eq:'Да'}},
+ {id:'Старшее поколение: участие', q:'Готовы ли родители, бабушки или дедушки участвовать в съёмках?', ty:'radio', o:D.relP, r:1},
+ {id:'Город съёмок с близкими', q:'В каком городе живут родственники, которых можно привлечь?', ty:'text', h:'Достаточно города'},
+ {id:'Питомцы', q:'Есть ли у тебя питомцы?', ty:'radio', o:D.yn, r:1},
+ {id:'Питомцы: кто', q:'Кто именно?', ty:'checks', o:D.pets, r:1, s:{f:'Питомцы', eq:'Да'}},
+ {id:'Питомцы: порода и возраст', q:'Порода и возраст', ty:'text', h:'Если хочешь уточнить', s:{f:'Питомцы', eq:'Да'}},
+ {id:'Съёмки с питомцами', q:'Можно ли иногда снимать контент с питомцами?', ty:'radio', o:D.yn, r:1, s:{f:'Питомцы', eq:'Да'}}
+]},
+{t:'Транспорт', f:[
+ {id:'Автомобиль', q:'Есть ли у тебя автомобиль?', ty:'radio', o:D.yn, r:1},
+ {id:'Авто: марка и модель', q:'Марка и модель', ty:'text', r:1, s:{f:'Автомобиль', eq:'Да'}},
+ {id:'Водительские права', q:'Есть ли водительские права?', ty:'radio', o:D.lic, r:1},
+ {id:'Съёмки за рулём', q:'Готов ли сниматься за рулём или в автомобильных проектах?', ty:'radio', o:D.yn}
+]},
+{t:'Образ жизни и привычки', n:'Факт употребления и готовность брать категорию — разные вещи. Можно не пить и спокойно сниматься в рекламе вина. И наоборот.', f:[
+ {id:'Курит', q:'Куришь ли ты?', ty:'radio', o:D.yn},
+ {id:'Табачная категория: берёт', q:'Готов ли брать проекты в табачной категории — сигареты, вейпы, стики?', ty:'radio', o:D.yn, r:1},
+ {id:'Употребляет алкоголь', q:'Употребляешь ли алкоголь?', ty:'radio', o:D.yn},
+ {id:'Алкогольная категория: берёт', q:'Готов ли брать проекты в алкогольной категории?', ty:'radio', o:D.yn, r:1},
+ {id:'Пищевые предпочтения', q:'Есть ли особые пищевые предпочтения?', ty:'checks', o:D.food},
+ {id:'Пищевые: другое', q:'Что именно?', ty:'text', s:{f:'Пищевые предпочтения', has:'Другое'}},
+ {id:'Стоп-категории: есть', q:'Есть ли что-то, что ты не готов рекламировать?', ty:'radio', o:D.stopHas, r:1,
+  h:'При ответе «Да, есть» выпадет список. Советуем изучить его прежде, чем отмечать «готов на всё».'},
+ {id:'Стоп-категории: какие', q:'Что именно?', ty:'checks', o:D.stop, r:1, s:{f:'Стоп-категории: есть', eq:'Да, есть'}},
+ {id:'Стоп-категории: другое', q:'Другое — напиши своими словами. Это правда важно для нас!', ty:'text', r:1, s:{f:'Стоп-категории: какие', has:'Другое'}}
+]},
+{t:'Темы и интересы', f:[
+ {id:'Интересные темы', q:'Какие темы тебе близки?', ty:'checks', o:D.topics, r:1},
+ {id:'Темы: другое', q:'Ты отметил «Другое» — какие это темы?', ty:'text', r:1, s:{f:'Интересные темы', has:'Другое'}},
+ {id:'Тема, в которую вовлечён', q:'Есть ли тема, в которую ты правда вовлечён?', ty:'area',
+  h:'Волонтёрство, фонд, своя инициатива, личная история. Если занимаешься чем-то постоянно, а не просто сочувствуешь — расскажи.'},
+ {id:'Соц. проекты: готовность', q:'Готов ли участвовать в проектах на эти темы?', ty:'radio', o:D.soc, r:1},
+ {id:'Соц. проекты: какие категории', q:'Ты выбрал «только на некоторые» — на какие?', ty:'checks', o:D.topics.slice(0,-1), r:1, s:{f:'Соц. проекты: готовность', eq:'Только на некоторые'}}
+]},
+{t:'Дополнительные возможности', f:[
+ {id:'Съёмки вне своего города', q:'Готов ли иногда сниматься за пределами своего города?', ty:'radio', o:D.trip},
+ {id:'Привлечение друзей / коллег', q:'Можешь ли привлекать к съёмкам друзей или коллег?', ty:'radio', o:D.yn, r:1},
+ {id:'Интересный опыт для сюжета', q:'Есть ли опыт, профессия или увлечение, из которых может выйти необычный сюжет?', ty:'area',
+  h:'Бывшая профессия, редкий навык, история из жизни'},
+ {id:'События в ближайшие месяцы', q:'Планируются ли в ближайшие месяцы значимые события в жизни?', ty:'checks', o:D.events, r:1},
+ {id:'События: другое', q:'Что именно?', ty:'text', r:1, s:{f:'События в ближайшие месяцы', has:'Другое'}},
+ {id:'Соавторство в TikTok', q:'Подключена ли у тебя функция соавторства в TikTok?', ty:'radio', o:D.yn, r:1,
+  tip:['Открой TikTok и нажми «+».','Загрузи любое видео, но не публикуй его.','Нажми «Далее» и перейди к экрану публикации.','Найди пункт «Пригласить соавторов» (Invite collaborators). Он может находиться в разделе отметки людей.','Если пункт есть — функция доступна. Возвращайся и отмечай «Да».']}
+]}];
+
+/* ════════════ СОСТОЯНИЕ ════════════ */
+let TOKEN = '', NAME = '', ANS = {}, SENDING = false, DRAFT_OK = false;
+const FIELDS = SCHEMA.flatMap(s => s.f);
+const byId   = Object.fromEntries(FIELDS.map(f => [f.id, f]));
+const $   = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const show = id => { document.querySelectorAll('.screen').forEach(e => e.classList.remove('on'));
+                     $('#'+id).classList.add('on'); window.scrollTo(0,0); };
+
+/* ════════════ ОТРИСОВКА ════════════ */
+function render(){
+  $('#railL').textContent = RAIL_L.repeat(2);
+  $('#railR').textContent = RAIL_R.repeat(2);
+
+  $('#body').innerHTML = SCHEMA.map(sec => `
+    <section class="sec">
+      <h2>${esc(sec.t)}</h2>
+      ${sec.n ? `<p class="note">${esc(sec.n)}</p>` : ''}
+      ${sec.f.map(field).join('')}
+    </section>`).join('');
+
+  $('#body').addEventListener('change', () => { collect(); refresh(); save(); });
+  $('#body').addEventListener('input',  () => { collect(); scheduleSave(); });
+  document.querySelectorAll('.tip>button').forEach(b => b.onclick = () => b.parentElement.classList.add('open'));
+  document.querySelectorAll('.tip .back').forEach(b => b.onclick = () => b.parentElement.classList.remove('open'));
+}
+
+function field(f){
+  const nm = esc(f.id), req = f.r ? ' <span class="req">*</span>' : '';
+  let ctl;
+  if (f.ty === 'radio' || f.ty === 'checks'){
+    const t = f.ty === 'radio' ? 'radio' : 'checkbox';
+    ctl = `<div class="opts">${f.o.map(o => `
+      <label class="opt"><input type="${t}" name="${nm}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('')}</div>`;
+  } else if (f.ty === 'area'){
+    ctl = `<textarea name="${nm}" rows="3" maxlength="1500"></textarea>`;
+  } else {
+    ctl = `<input type="text" name="${nm}" maxlength="1500" autocomplete="off">`;
+  }
+  const tip = f.tip ? `<div class="tip">
+      <button type="button">Хз. как проверить?</button>
+      <ol>${f.tip.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+      <button type="button" class="back">Проверил, погнали обратно к вопросу</button>
+    </div>` : '';
+  return `<div class="f" data-id="${nm}" ${f.s ? 'style="display:none"' : ''}>
+      <label>${esc(f.q)}${req}</label>
+      ${f.h ? `<div class="hint">${esc(f.h)}</div>` : ''}
+      ${ctl}${tip}
+      <div class="err">Ответь на этот вопрос, чтобы продолжить</div>
+    </div>`;
+}
+
+function collect(){
+  ANS = {};
+  for (const f of FIELDS){
+    const els = document.getElementsByName(f.id);
+    if (!els.length) continue;
+    if (f.ty === 'checks'){
+      const v = [...els].filter(e => e.checked).map(e => e.value);
+      if (v.length) ANS[f.id] = v.join('; ');
+    } else if (f.ty === 'radio'){
+      const e = [...els].find(e => e.checked);
+      if (e) ANS[f.id] = e.value;
+    } else {
+      const v = els[0].value.trim().slice(0, 1500);
+      if (v) ANS[f.id] = v;
+    }
+  }
+}
+
+function visible(f){
+  if (!f.s) return true;
+  const v = ANS[f.s.f];
+  if (!v) return false;
+  if (f.s.eq)  return v === f.s.eq;
+  if (f.s.has) return v.split('; ').includes(f.s.has);
+  return true;
+}
+function refresh(){
+  for (const f of FIELDS){
+    const el = document.querySelector(`.f[data-id="${CSS.escape(f.id)}"]`);
+    if (!el) continue;
+    const vis = visible(f);
+    el.style.display = vis ? '' : 'none';
+    if (!vis){ clearField(f); el.classList.remove('bad'); }
+  }
+  collect();
+  const need = FIELDS.filter(f => f.r && visible(f));
+  const done = need.filter(f => ANS[f.id]).length;
+  $('#pg').style.display = 'block';
+  $('#pgBar').style.width = need.length ? Math.round(done / need.length * 100) + '%' : '0%';
+  $('#pgTxt').textContent = done + ' / ' + need.length;
+}
+function clearField(f){
+  [...document.getElementsByName(f.id)].forEach(e => {
+    if (e.type === 'radio' || e.type === 'checkbox') e.checked = false; else e.value = '';
+  });
+}
+
+function validate(){
+  let first = null, n = 0;
+  for (const f of FIELDS){
+    const el = document.querySelector(`.f[data-id="${CSS.escape(f.id)}"]`);
+    if (!el) continue;
+    const bad = f.r && visible(f) && !ANS[f.id];
+    el.classList.toggle('bad', bad);
+    if (bad){ n++; if (!first) first = el; }
+  }
+  const okC = $('#consent').checked;
+  $('#consentBox').classList.toggle('bad', !okC);
+  if (!okC && !first) first = $('#consentBox');
+  if (first) first.scrollIntoView({behavior:'smooth', block:'center'});
+  $('#sendMsg').textContent = n ? `Осталось ответить на ${n} ${plural(n)}. Они подсвечены выше` : '';
+  return n === 0 && okC;
+}
+const plural = n => { const a = n % 10, b = n % 100;
+  if (a === 1 && b !== 11) return 'вопрос';
+  if (a >= 2 && a <= 4 && (b < 10 || b >= 20)) return 'вопроса';
+  return 'вопросов'; };
+
+/* ════════════ ЧЕРНОВИК ════════════
+   Лежит в браузере блогера. Открывается только после проверки,
+   если анкета уже заполнялась, и протухает через DRAFT_DAYS дней,
+   чтобы не оставаться на общем компьютере навсегда.                */
+const KEY = () => 'ih_anketa_' + TOKEN;
+let saveT = null;
+function scheduleSave(){ clearTimeout(saveT); saveT = setTimeout(save, 700); }
+function save(){
+  if (!DRAFT_OK) return;
+  try {
+    localStorage.setItem(KEY(), JSON.stringify({v:1, t:Date.now(), d:ANS}));
+    $('#saved').classList.add('on');
+    setTimeout(() => $('#saved').classList.remove('on'), 1400);
+  } catch(e){}
+}
+function readDraft(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY()) || 'null');
+    if (!raw || raw.v !== 1 || !raw.d) return null;
+    if (Date.now() - raw.t > CFG.DRAFT_DAYS * 864e5){ localStorage.removeItem(KEY()); return null; }
+    return raw.d;
+  } catch(e){ return null; }
+}
+function dropDraft(){ try { localStorage.removeItem(KEY()); } catch(e){} }
+
+function fill(data){
+  for (const [k,v] of Object.entries(data || {})){
+    const f = byId[k]; if (!f) continue;
+    const els = document.getElementsByName(k); if (!els.length) continue;
+    if (f.ty === 'checks'){
+      const set = new Set(String(v).split('; '));
+      [...els].forEach(e => e.checked = set.has(e.value));
+    } else if (f.ty === 'radio'){
+      [...els].forEach(e => e.checked = (e.value === v));
+    } else {
+      els[0].value = String(v).slice(0, 1500);
+    }
+  }
+  collect(); refresh();
+}
+
+/* ════════════ СЕТЬ ════════════ */
+async function api(action, payload){
+  const r = await fetch(CFG.ENDPOINT, {
+    method : 'POST',
+    headers: {'Content-Type':'text/plain;charset=utf-8'},   // без preflight
+    body   : JSON.stringify(Object.assign({action, token:TOKEN}, payload || {}))
+  });
+  if (!r.ok) throw new Error('http ' + r.status);
+  return r.json();
+}
+
+/* ════════════ ЗАПУСК ════════════ */
+function boot(){
+  $('#lkConsent').href = CFG.CONSENT_URL;
+  $('#lkPrivacy').href = CFG.PRIVACY_URL;
+  render();
+  document.body.classList.add('ready');
+
+  const t = (new URLSearchParams(location.search).get('t') || '').trim();
+  if (!t){ done(); show('scGate'); return; }
+  TOKEN = t;
+  openForm();
+}
+function done(){ const l = $('#loader'); l.classList.add('hide'); setTimeout(() => l.remove(), 600); }
+
+async function openForm(){
+  let d;
+  try { d = await api('open'); }
+  catch(e){
+    done(); $('#gateMsg').textContent = 'Не получилось связаться с сервером. Попробуй обновить страницу.';
+    show('scGate'); return;
+  }
+  done();
+
+  if (!d || !d.ok){
+    if (d && d.locked){ $('#lockedMsg').textContent = d.error || 'Напиши своему менеджеру — он откроет доступ.'; show('scLocked'); return; }
+    $('#gateMsg').textContent = (d && d.error) || 'Ссылка устала или устарела. Напиши своему менеджеру — он пришлёт новую';
+    show('scGate'); return;
+  }
+
+  NAME = d.name || '';
+  $('#hello').innerHTML  = NAME ? `Привет, <em>${esc(NAME)}</em>!` : 'Привет!';
+  $('#thanks').innerHTML = NAME ? `Спасибо, <em>${esc(NAME)}</em>!` : 'Спасибо!';
+  $('#myLink').textContent = location.origin + location.pathname + '?t=' + TOKEN;
+
+  if (d.filled){
+    // анкета уже заполнялась — ни прошлые ответы, ни черновик
+    // не показываем, пока человек не подтвердит, что это он
+    $('#verifyLead').textContent =
+      `Ты уже заполнял эту анкету ${d.filled}. Чтобы открыть прошлые ответы и поправить их, введи свою дату рождения.`;
+    show('scVerify'); return;
+  }
+  DRAFT_OK = true;
+  const draft = readDraft();
+  if (draft) fill(draft); else refresh();
+  show('scForm');
+}
+
+/* ── обработчики ── */
+$('#gateGo').onclick = () => {
+  const v = $('#gateCode').value.trim().replace(/\s+/g,'').toLowerCase();
+  if (!/^[23456789abcdefghjkmnpqrstuvwxyz]{8,32}$/.test(v)){
+    $('#gateMsg').textContent = 'Такого кода нет. Будь это ограбление, ты бы спалился. Проверь код или просто открой ссылку, которую прислал менеджер';
+    return;
+  }
+  location.search = '?t=' + encodeURIComponent(v);
+};
+$('#gateCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('#gateGo').click(); });
+
+$('#verifyDob').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'').slice(0,8);
+  if (v.length > 4) v = v.slice(0,2)+'.'+v.slice(2,4)+'.'+v.slice(4);
+  else if (v.length > 2) v = v.slice(0,2)+'.'+v.slice(2);
+  e.target.value = v;
+});
+$('#verifyGo').onclick = async () => {
+  const dob = $('#verifyDob').value.trim();
+  if (!/^\d{2}\.\d{2}\.\d{4}$/.test(dob)){ $('#verifyMsg').textContent = 'Введи дату в формате ДД.ММ.ГГГГ'; return; }
+  $('#verifyGo').disabled = true;
+  $('#verifyMsg').textContent = 'Проверяем…';
+  let d;
+  try { d = await api('load', {dob}); }
+  catch(e){ $('#verifyGo').disabled = false; $('#verifyMsg').textContent = 'Сервер не отвечает, попробуй ещё раз'; return; }
+  $('#verifyGo').disabled = false;
+
+  if (d && d.ok){
+    $('#verifyMsg').textContent = '';
+    DRAFT_OK = true;
+    fill(readDraft() || d.answers);
+    show('scForm'); return;
+  }
+  if (d && d.locked){ $('#lockedMsg').textContent = d.error; show('scLocked'); return; }
+  $('#verifyMsg').textContent = (d && d.error) || 'Дата не совпадает — попробуй ещё раз';
+};
+$('#verifySkip').onclick = () => {
+  // заполняет заново — чужого черновика не подсовываем
+  dropDraft(); DRAFT_OK = true; refresh(); show('scForm');
+};
+
+$('#lockedAsk').onclick = async () => {
+  $('#lockedAsk').disabled = true;
+  try { await api('ask'); } catch(e){}
+  $('#lockedDone').textContent = 'Готово — менеджер увидит и откроет доступ.';
+};
+
+$('#consent').addEventListener('change', () => $('#consentBox').classList.remove('bad'));
+
+$('#send').onclick = async () => {
+  if (SENDING) return;
+  collect();
+  if (!validate()) return;
+  SENDING = true;
+  $('#send').disabled = true;
+  $('#send').textContent = 'Отправляем… не закрывай страницу';
+  $('#sendMsg').textContent = '';
+  let d;
+  try { d = await api('submit', {answers: ANS, consent: true, ua: navigator.userAgent.slice(0,250)}); }
+  catch(e){ d = null; }
+
+  if (d && d.ok){ dropDraft(); show('scDone'); return; }
+
+  SENDING = false;
+  $('#send').disabled = false;
+  $('#send').textContent = 'ТЫК';
+  if (d && d.locked){ $('#lockedMsg').textContent = d.error; show('scLocked'); return; }
+  $('#sendMsg').textContent = (d && d.error) ||
+    'Упс... не получилось отправить (инопланетные силы мешают нашему единению). Твои ответы сохранены — попробуй ещё раз через минуту';
+};
+
+$('#copyLink').onclick = () => {
+  navigator.clipboard.writeText($('#myLink').textContent).then(() => {
+    $('#copyLink').textContent = 'Скопировано';
+    setTimeout(() => $('#copyLink').textContent = 'Скопировать ссылку', 1800);
+  }).catch(() => {});
+};
+
+boot();
+</script>
+</body>
+</html>
