@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow, noarchive">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'">
 <title>Анкета интересов · Influency Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -131,7 +131,7 @@ h1 em{font-style:normal;color:var(--orange)}
 
 .f.bad>label{color:var(--red)}
 .f.bad input[type=text],.f.bad textarea{border-color:var(--red)}
-.f.bad .opts{outline:1px solid var(--red);outline-offset:6px;border-radius:12px}
+.f.bad .opt span{border-color:rgba(255,90,90,.55)}
 .err{display:none;font-size:12.5px;color:var(--red);margin-top:7px;font-weight:600}
 .f.bad .err{display:block}
 
@@ -249,6 +249,7 @@ a{color:var(--orange);text-decoration:underline;text-underline-offset:2px}
       <div class="msg e" id="verifyMsg"></div>
       <div class="row"><button class="btn" id="verifyGo">Продолжить</button></div>
       <div class="row"><button class="btn ghost" id="verifySkip">Заполнить заново</button></div>
+      <p class="lead" style="font-size:13px;margin-top:16px;text-align:center">Спрашиваем, потому что по этой ссылке видно твои ответы. Пусть их увидишь только ты — даже если ссылка где-то всплывёт.</p>
     </div>
   </div>
 
@@ -302,6 +303,7 @@ a{color:var(--orange);text-decoration:underline;text-underline-offset:2px}
 </div>
 
 <div class="saved" id="saved">Черновик сохранён</div>
+<audio id="tykSound" preload="auto" src="tyk.mp3"></audio>
 
 <script>
 /* ════════════ НАСТРОЙКИ ════════════
@@ -335,7 +337,7 @@ const D = {
   lic     : ['Да','Нет','Учусь в автошколе'],
   food    : ['Без ограничений','Вегетарианство','Веганство','Без глютена','Без лактозы','Халяль','Кошер','Другое'],
   stop    : ['Алкоголь','Табак и вейпы','Ставки и азартные игры','Микрозаймы и МФО','Медицина и клиники','Политика','Религия','БАДы и фарма','Пластическая хирургия','Криптовалюта','Эзотерика','Инфобизнес и курсы','Другое'],
-  topics  : ['Экология','Благотворительность','Помощь животным','Инклюзия и доступная среда','Образование и наука','Здоровье и ментальное здоровье','Спорт и ЗОЖ','Поддержка семьи и материнство','Гос. программы и городские инициативы','Культура и искусство','Технологии','Финансовая грамотность','Другое'],
+  topics  : ['Экология','Благотворительность','Помощь животным','Инклюзия и доступная среда','Образование и наука','Здоровье и ментальное состояние','Спорт и ЗОЖ','Поддержка семьи и материнство','Гос. программы и городские инициативы','Культура и искусство','Технологии','Финансовая грамотность','Другое'],
   soc     : ['Да, на любые из отмеченных','Только на некоторые','Нет'],
   trip    : ['Да, по России','Да, включая зарубеж','Только свой регион','Только свой город','Нет'],
   events  : ['Нет','Переезд','Ремонт','Путешествие','Обучение','Свадьба','Рождение ребёнка','Смена работы','Другое'],
@@ -436,8 +438,37 @@ function render(){
       ${sec.f.map(field).join('')}
     </section>`).join('');
 
-  $('#body').addEventListener('change', () => { collect(); refresh(); save(); });
-  $('#body').addEventListener('input',  () => { collect(); scheduleSave(); });
+  $('#body').addEventListener('change', () => { collect(); refresh(); clearBadLive(); save(); });
+  $('#body').addEventListener('input',  () => { collect(); clearBadLive(); scheduleSave(); });
+  /* Радиокнопку штатно снять нельзя — можно только переключить.
+     Для необязательных вопросов это тупик: человек ответил случайно
+     и не может отменить. Запоминаем состояние до клика и снимаем,
+     если кликнули по уже выбранному варианту.                      */
+  const remember = e => {
+    const lab = e.target.closest('.opt');
+    if (!lab) return;
+    const inp = lab.querySelector('input[type=radio]');
+    if (!inp) return;
+    [...document.getElementsByName(inp.name)].forEach(x => { x.dataset.was = x.checked ? '1' : '0'; });
+  };
+  $('#body').addEventListener('mousedown', remember);
+  $('#body').addEventListener('touchstart', remember, {passive:true});
+  $('#body').addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') remember(e); });
+
+  $('#body').addEventListener('click', e => {
+    const lab = e.target.closest('.opt');
+    if (!lab) return;
+    const inp = lab.querySelector('input[type=radio]');
+    if (!inp) return;
+    const f = byId[inp.name];
+    if (!f || f.r) return;                     // обязательный ответ снимать нечего
+    if (inp.dataset.was === '1'){
+      inp.checked = false;
+      inp.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+    inp.dataset.was = inp.checked ? '1' : '0';
+  });
+
   document.querySelectorAll('.tip>button').forEach(b => b.onclick = () => b.parentElement.classList.add('open'));
   document.querySelectorAll('.tip .back').forEach(b => b.onclick = () => b.parentElement.classList.remove('open'));
 }
@@ -519,7 +550,7 @@ function validate(){
   for (const f of FIELDS){
     const el = document.querySelector(`.f[data-id="${CSS.escape(f.id)}"]`);
     if (!el) continue;
-    const bad = f.r && visible(f) && !ANS[f.id];
+    const bad = !!f.r && visible(f) && !ANS[f.id];
     el.classList.toggle('bad', bad);
     if (bad){ n++; if (!first) first = el; }
   }
@@ -527,9 +558,30 @@ function validate(){
   $('#consentBox').classList.toggle('bad', !okC);
   if (!okC && !first) first = $('#consentBox');
   if (first) first.scrollIntoView({behavior:'smooth', block:'center'});
-  $('#sendMsg').textContent = n ? `Осталось ответить на ${n} ${plural(n)}. Они подсвечены выше` : '';
+
+  if (n) $('#sendMsg').textContent = `Осталось ответить на ${n} ${plural(n)} — ${n === 1 ? 'он подсвечен' : 'они подсвечены'} красным`;
+  else if (!okC) $('#sendMsg').textContent = 'Поставь галочку согласия — без неё анкету принять не можем';
+  else $('#sendMsg').textContent = '';
   return n === 0 && okC;
 }
+
+/* Красное гаснет сразу, как только на вопрос ответили, а не после
+   следующего нажатия «ТЫК». Иначе человек видит красным то,
+   что уже заполнил, и не понимает, чего от него хотят.              */
+function clearBadLive(){
+  for (const f of FIELDS){
+    const el = document.querySelector(`.f[data-id="${CSS.escape(f.id)}"]`);
+    if (!el || !el.classList.contains('bad')) continue;
+    if (!visible(f) || ANS[f.id]) el.classList.remove('bad');
+  }
+  const left = document.querySelectorAll('.f.bad').length;
+  const okC  = $('#consent').checked;
+  if (!left && okC) $('#sendMsg').textContent = '';
+  else if (!left && !okC) $('#sendMsg').textContent = 'Поставь галочку согласия — без неё анкету принять не можем';
+  else if ($('#sendMsg').textContent) $('#sendMsg').textContent =
+    `Осталось ответить на ${left} ${plural(left)} — ${left === 1 ? 'он подсвечен' : 'они подсвечены'} красным`;
+}
+
 const plural = n => { const a = n % 10, b = n % 100;
   if (a === 1 && b !== 11) return 'вопрос';
   if (a >= 2 && a <= 4 && (b < 10 || b >= 20)) return 'вопроса';
@@ -540,16 +592,36 @@ const plural = n => { const a = n % 10, b = n % 100;
    если анкета уже заполнялась, и протухает через DRAFT_DAYS дней,
    чтобы не оставаться на общем компьютере навсегда.                */
 const KEY = () => 'ih_anketa_' + TOKEN;
-let saveT = null;
+let saveT = null, srvT = null;
+
 function scheduleSave(){ clearTimeout(saveT); saveT = setTimeout(save, 700); }
+
 function save(){
   if (!DRAFT_OK) return;
-  try {
-    localStorage.setItem(KEY(), JSON.stringify({v:1, t:Date.now(), d:ANS}));
-    $('#saved').classList.add('on');
-    setTimeout(() => $('#saved').classList.remove('on'), 1400);
-  } catch(e){}
+  try { localStorage.setItem(KEY(), JSON.stringify({v:1, t:Date.now(), d:ANS})); } catch(e){}
+  flash('Черновик сохранён');
+  scheduleServerSave();
 }
+
+/* Черновик уходит и на сервер — чтобы человек начал на ноутбуке,
+   а дописал с телефона. Отправляем не чаще раза в 8 секунд:
+   Apps Script не резиновый.                                        */
+function scheduleServerSave(){
+  clearTimeout(srvT);
+  srvT = setTimeout(() => {
+    if (!DRAFT_OK || !Object.keys(ANS).length) return;
+    api('draft', {answers: ANS}).catch(() => {});
+  }, 8000);
+}
+
+function flash(text){
+  const el = $('#saved');
+  el.textContent = text;
+  el.classList.add('on');
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => el.classList.remove('on'), 1400);
+}
+
 function readDraft(){
   try {
     const raw = JSON.parse(localStorage.getItem(KEY()) || 'null');
@@ -631,11 +703,12 @@ async function openForm(){
   $('#thanks').innerHTML = NAME ? `Спасибо, <em>${esc(NAME)}</em>!` : 'Спасибо!';
   $('#myLink').textContent = location.origin + location.pathname + '?t=' + TOKEN;
 
-  if (d.filled){
-    // анкета уже заполнялась — ни прошлые ответы, ни черновик
-    // не показываем, пока человек не подтвердит, что это он
-    $('#verifyLead').textContent =
-      `Ты уже заполнял эту анкету ${d.filled}. Чтобы открыть прошлые ответы и поправить их, введи свою дату рождения.`;
+  if (d.hasData){
+    // На сервере уже что-то есть: отправленная анкета или недописанный
+    // черновик. Показывать это кому попало нельзя, поэтому спрашиваем дату.
+    $('#verifyLead').textContent = d.filled
+      ? `Ты уже заполнял эту анкету ${d.filled}. Чтобы открыть свои ответы и поправить их, введи дату рождения.`
+      : `У нас остался твой недописанный черновик${d.draftAt ? ' от ' + d.draftAt : ''}. Чтобы продолжить с того же места, введи дату рождения.`;
     show('scVerify'); return;
   }
   DRAFT_OK = true;
@@ -674,15 +747,15 @@ $('#verifyGo').onclick = async () => {
   if (d && d.ok){
     $('#verifyMsg').textContent = '';
     DRAFT_OK = true;
-    fill(readDraft() || d.answers);
+    fill(d.answers || readDraft() || {});
     show('scForm'); return;
   }
   if (d && d.locked){ $('#lockedMsg').textContent = d.error; show('scLocked'); return; }
   $('#verifyMsg').textContent = (d && d.error) || 'Дата не совпадает — попробуй ещё раз';
 };
 $('#verifySkip').onclick = () => {
-  // заполняет заново — чужого черновика не подсовываем
-  dropDraft(); DRAFT_OK = true; refresh(); show('scForm');
+  // заполняет заново — ни локального, ни серверного черновика не подсовываем
+  dropDraft(); DRAFT_OK = true; ANS = {}; refresh(); show('scForm');
 };
 
 $('#lockedAsk').onclick = async () => {
@@ -691,12 +764,14 @@ $('#lockedAsk').onclick = async () => {
   $('#lockedDone').textContent = 'Готово — менеджер увидит и откроет доступ.';
 };
 
-$('#consent').addEventListener('change', () => $('#consentBox').classList.remove('bad'));
+$('#consent').addEventListener('change', () => { $('#consentBox').classList.remove('bad'); clearBadLive(); });
 
 $('#send').onclick = async () => {
   if (SENDING) return;
   collect();
   if (!validate()) return;
+  try { $('#tykSound').play(); } catch(e){}
+  clearTimeout(srvT);
   SENDING = true;
   $('#send').disabled = true;
   $('#send').textContent = 'Отправляем… не закрывай страницу';
