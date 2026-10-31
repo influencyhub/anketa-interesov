@@ -31,7 +31,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.05;z
 .loader.hide{opacity:0;pointer-events:none}
 .loader .ring{width:46px;height:46px;border:3px solid var(--card);border-top-color:var(--orange);
   border-radius:50%;animation:sp .8s linear infinite}
-.loader p{color:var(--muted);font-size:14px;max-width:270px;text-align:center;line-height:1.5}
+.loader p{color:var(--muted);font-size:14px;max-width:290px;text-align:center;line-height:1.5;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif}
 @keyframes sp{to{transform:rotate(360deg)}}
 
 /* ── шапка ── */
@@ -169,6 +170,10 @@ a{color:var(--orange);text-decoration:underline;text-underline-offset:2px}
 .row .btn{flex:1}
 
 .gate{max-width:430px;margin:0 auto}
+.example{background:#000;border:1px dashed #3a3a40;border-radius:12px;padding:13px 10px;margin:4px 0 16px;
+  text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;
+  color:var(--muted);word-break:break-all}
+.example b{color:var(--orange);font-weight:700}
 .gate input{width:100%;background:#000;border:1px solid var(--line);border-radius:12px;padding:15px;
   font-size:17px;color:var(--white);font-family:'Unbounded';letter-spacing:.14em;text-align:center;outline:none}
 .gate input:focus{border-color:var(--orange)}
@@ -195,7 +200,7 @@ a{color:var(--orange);text-decoration:underline;text-underline-offset:2px}
 
 <header class="chrome-top">
   <a href="https://influencyhub.ru" target="_blank" rel="noopener noreferrer" title="influencyhub.ru">
-    <img src="./logo.png" alt="Influency Hub" onerror="this.style.display='none'">
+    <img id="logoImg" alt="Influency Hub">
   </a>
 </header>
 
@@ -225,10 +230,12 @@ a{color:var(--orange);text-decoration:underline;text-underline-offset:2px}
       <p class="lead">Чтобы мы находили для тебя проекты, от которых сложно отказаться, нам нужно знать чуть больше, чем ник и статистику.</p>
     </div>
     <div class="gate">
-      <p class="lead" style="text-align:center">Введи код из ссылки, которую прислал твой менеджер. Если ссылки нет — напиши ему, он пришлёт.</p>
-      <input id="gateCode" maxlength="24" placeholder="код анкеты" autocomplete="off" spellcheck="false" inputmode="latin">
+      <p class="lead" style="text-align:center">У каждого блогера своя персональная ссылка — её присылает менеджер. Открой её, и анкета запустится сама.</p>
+      <div class="example">anketa.influencyhub.ru/?t=<b>k7m2x9qp4rtd</b></div>
+      <p class="lead" style="text-align:center;font-size:14px">Ссылка потерялась — напиши менеджеру, он пришлёт новую. А если она у тебя перед глазами, введи код: это набор букв и цифр в самом конце, после «?t=».</p>
+      <input id="gateCode" maxlength="24" placeholder="k7m2x9qp4rtd" autocomplete="off" spellcheck="false" inputmode="latin">
       <div class="msg e" id="gateMsg"></div>
-      <div class="row"><button class="btn" id="gateGo">Открыть</button></div>
+      <div class="row"><button class="btn" id="gateGo">Открыть анкету</button></div>
     </div>
     <p class="sign">Сделано с любовью в <a href="https://influencyhub.ru" target="_blank" rel="noopener noreferrer">Influency Hub</a> · центр влияния</p>
   </div>
@@ -582,6 +589,8 @@ async function api(action, payload){
 
 /* ════════════ ЗАПУСК ════════════ */
 function boot(){
+  if (LOGO_B64 && LOGO_B64.indexOf('data:image') === 0) $('#logoImg').src = LOGO_B64;
+  else $('#logoImg').style.display = 'none';
   $('#lkConsent').href = CFG.CONSENT_URL;
   $('#lkPrivacy').href = CFG.PRIVACY_URL;
   render();
@@ -592,7 +601,15 @@ function boot(){
   TOKEN = t;
   openForm();
 }
-function done(){ const l = $('#loader'); l.classList.add('hide'); setTimeout(() => l.remove(), 600); }
+/* Прячем загрузчик только когда шрифты уже готовы — иначе на долю секунды
+   видно системный шрифт вместо фирменного. Ждём максимум полторы секунды,
+   чтобы медленный интернет не держал человека на пустом экране.        */
+function done(){
+  const hide = () => { const l = $('#loader'); if (!l) return;
+    l.classList.add('hide'); setTimeout(() => l.remove(), 600); };
+  const ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  Promise.race([ready, new Promise(r => setTimeout(r, 1500))]).then(hide);
+}
 
 async function openForm(){
   let d;
