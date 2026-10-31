@@ -18,7 +18,7 @@
   --shadow:0 30px 80px -30px rgba(229,130,10,.35);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{scroll-padding-top:100px}
+html{scroll-padding-top:100px;overflow-x:hidden}
 body{background:var(--bg);color:var(--white);font-family:'Manrope',sans-serif;
   min-height:100vh;overflow-x:hidden;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -74,7 +74,7 @@ body.ready .rail .track{opacity:1}
 
 /* ── каркас ── */
 .wrap{max-width:620px;margin:0 auto;padding:92px 18px 108px;position:relative;z-index:2}
-.wrap::before{content:"";position:absolute;width:760px;height:430px;top:-120px;right:-280px;
+.glow{position:fixed;width:760px;height:430px;top:-120px;right:-280px;z-index:0;
   border-radius:50%;pointer-events:none;background:radial-gradient(ellipse,rgba(229,130,10,.15),transparent 70%)}
 
 /* ── прогресс ── */
@@ -204,6 +204,7 @@ a{color:var(--orange);text-decoration:underline;text-underline-offset:2px}
   </a>
 </header>
 
+<div class="glow" aria-hidden="true"></div>
 <div class="rail l" aria-hidden="true"><div class="track" id="railL"></div></div>
 <div class="rail r" aria-hidden="true"><div class="track" id="railR"></div></div>
 
@@ -249,7 +250,7 @@ a{color:var(--orange);text-decoration:underline;text-underline-offset:2px}
       <div class="msg e" id="verifyMsg"></div>
       <div class="row"><button class="btn" id="verifyGo">Продолжить</button></div>
       <div class="row"><button class="btn ghost" id="verifySkip">Заполнить заново</button></div>
-      <p class="lead" style="font-size:13px;margin-top:16px;text-align:center">Спрашиваем, потому что по этой ссылке видно твои ответы. Пусть их увидишь только ты — даже если ссылка где-то всплывёт.</p>
+      <p class="lead" style="margin-top:16px;text-align:center">Спрашиваем, потому что по этой ссылке видно твои ответы. А нам важно, чтобы они ни к кому больше не попали — даже если ссылка где-то всплывёт.</p>
     </div>
   </div>
 
@@ -455,11 +456,12 @@ function render(){
   $('#body').addEventListener('touchstart', remember, {passive:true});
   $('#body').addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') remember(e); });
 
+  /* Клик по надписи порождает два события: по самой надписи и затем
+     пересланный браузером клик по скрытой радиокнопке. Снимать ответ
+     нужно только на втором — иначе первый снимет, а второй вернёт. */
   $('#body').addEventListener('click', e => {
-    const lab = e.target.closest('.opt');
-    if (!lab) return;
-    const inp = lab.querySelector('input[type=radio]');
-    if (!inp) return;
+    const inp = e.target;
+    if (!inp || inp.tagName !== 'INPUT' || inp.type !== 'radio') return;
     const f = byId[inp.name];
     if (!f || f.r) return;                     // обязательный ответ снимать нечего
     if (inp.dataset.was === '1'){
@@ -560,7 +562,7 @@ function validate(){
   if (first) first.scrollIntoView({behavior:'smooth', block:'center'});
 
   if (n) $('#sendMsg').textContent = `Осталось ответить на ${n} ${plural(n)} — ${n === 1 ? 'он подсвечен' : 'они подсвечены'} красным`;
-  else if (!okC) $('#sendMsg').textContent = 'Поставь галочку согласия — без неё анкету принять не можем';
+  else if (!okC) $('#sendMsg').textContent = 'Без согласия мы не сможем принять анкету. Формальности, бюрократия, все дела...';
   else $('#sendMsg').textContent = '';
   return n === 0 && okC;
 }
@@ -577,7 +579,7 @@ function clearBadLive(){
   const left = document.querySelectorAll('.f.bad').length;
   const okC  = $('#consent').checked;
   if (!left && okC) $('#sendMsg').textContent = '';
-  else if (!left && !okC) $('#sendMsg').textContent = 'Поставь галочку согласия — без неё анкету принять не можем';
+  else if (!left && !okC) $('#sendMsg').textContent = 'Без согласия мы не сможем принять анкету. Формальности, бюрократия, все дела...';
   else if ($('#sendMsg').textContent) $('#sendMsg').textContent =
     `Осталось ответить на ${left} ${plural(left)} — ${left === 1 ? 'он подсвечен' : 'они подсвечены'} красным`;
 }
@@ -694,10 +696,14 @@ async function openForm(){
 
   if (!d || !d.ok){
     if (d && d.locked){ $('#lockedMsg').textContent = d.error || 'Напиши своему менеджеру — он откроет доступ.'; show('scLocked'); return; }
-    $('#gateMsg').textContent = (d && d.error) || 'Ссылка устала или устарела. Напиши своему менеджеру — он пришлёт новую';
+    const n = gateBump();
+    $('#gateMsg').textContent = n >= 5
+      ? 'Слишком много попыток. Попробуй через 15 минут или напиши менеджеру — он пришлёт рабочую ссылку'
+      : ((d && d.error) || 'Ссылка устала или устарела. Напиши своему менеджеру — он пришлёт новую');
     show('scGate'); return;
   }
 
+  try { localStorage.removeItem(TRY_KEY); } catch(e){}
   NAME = d.name || '';
   $('#hello').innerHTML  = NAME ? `Привет, <em>${esc(NAME)}</em>!` : 'Привет!';
   $('#thanks').innerHTML = NAME ? `Спасибо, <em>${esc(NAME)}</em>!` : 'Спасибо!';
@@ -712,15 +718,40 @@ async function openForm(){
     show('scVerify'); return;
   }
   DRAFT_OK = true;
-  const draft = readDraft();
-  if (draft) fill(draft); else refresh();
+  if (d.answers && Object.keys(d.answers).length) fill(d.answers);   // проверку снял менеджер
+  else { const draft = readDraft(); if (draft) fill(draft); else refresh(); }
   show('scForm');
 }
 
 /* ── обработчики ── */
+/* Счётчик неудачных попыток ввода кода. Живёт в браузере: Apps Script
+   не видит IP, так что по-настоящему перебор душит общий лимит на сервере,
+   а это — чтобы человек не долбился вслепую и понял, что пора писать менеджеру. */
+const TRY_KEY = 'ih_gate_tries';
+function gateTries(){
+  try {
+    const r = JSON.parse(localStorage.getItem(TRY_KEY) || 'null');
+    if (!r || Date.now() > r.until) return null;
+    return r;
+  } catch(e){ return null; }
+}
+function gateBump(){
+  const cur = gateTries() || { n: 0, until: Date.now() + 15 * 60000 };
+  cur.n++;
+  try { localStorage.setItem(TRY_KEY, JSON.stringify(cur)); } catch(e){}
+  return cur.n;
+}
+
 $('#gateGo').onclick = () => {
+  const blocked = gateTries();
+  if (blocked && blocked.n >= 5){
+    const min = Math.max(1, Math.ceil((blocked.until - Date.now()) / 60000));
+    $('#gateMsg').textContent = `Слишком много попыток. Попробуй через ${min} ${min === 1 ? 'минуту' : 'минут'} или напиши менеджеру — он пришлёт рабочую ссылку`;
+    return;
+  }
   const v = $('#gateCode').value.trim().replace(/\s+/g,'').toLowerCase();
   if (!/^[23456789abcdefghjkmnpqrstuvwxyz]{8,32}$/.test(v)){
+    gateBump();
     $('#gateMsg').textContent = 'Такого кода нет. Будь это ограбление, ты бы спалился. Проверь код или просто открой ссылку, которую прислал менеджер';
     return;
   }
