@@ -419,7 +419,16 @@ const SCHEMA = [
 ]}];
 
 /* ════════════ СОСТОЯНИЕ ════════════ */
-let TOKEN = '', NAME = '', ANS = {}, SENDING = false, DRAFT_OK = false;
+let TOKEN = '', NAME = '', ANS = {}, SENDING = false, DRAFT_OK = false, SID = '';
+
+/* Номер сессии. Сервер выдаёт его после подтверждения личности и живёт он
+   ТОЛЬКО в памяти этой страницы — ни в localStorage, ни в куках.
+   Поэтому дату рождения спрашивают при каждом открытии и обновлении:
+   перезагрузил вкладку — сессии нет. Это осознанно: ответы по ссылке
+   видны, и сохранённый пропуск превращал бы ссылку в постоянный ключ.
+   Потерять ничего нельзя — черновик лежит на сервере и вернётся сразу
+   после ввода даты.                                                    */
+function saveSid(v){ if (v) SID = v; }
 const FIELDS = SCHEMA.flatMap(s => s.f);
 const byId   = Object.fromEntries(FIELDS.map(f => [f.id, f]));
 const $   = s => document.querySelector(s);
@@ -655,7 +664,7 @@ async function api(action, payload){
   const r = await fetch(CFG.ENDPOINT, {
     method : 'POST',
     headers: {'Content-Type':'text/plain;charset=utf-8'},   // без preflight
-    body   : JSON.stringify(Object.assign({action, token:TOKEN}, payload || {}))
+    body   : JSON.stringify(Object.assign({action, token:TOKEN, sid:SID}, payload || {}))
   });
   if (!r.ok) throw new Error('http ' + r.status);
   return r.json();
@@ -704,6 +713,7 @@ async function openForm(){
   }
 
   try { localStorage.removeItem(TRY_KEY); } catch(e){}
+  saveSid(d.sid);
   NAME = d.name || '';
   $('#hello').innerHTML  = NAME ? `Привет, <em>${esc(NAME)}</em>!` : 'Привет!';
   $('#thanks').innerHTML = NAME ? `Спасибо, <em>${esc(NAME)}</em>!` : 'Спасибо!';
@@ -777,6 +787,7 @@ $('#verifyGo').onclick = async () => {
 
   if (d && d.ok){
     $('#verifyMsg').textContent = '';
+    saveSid(d.sid);
     DRAFT_OK = true;
     fill(d.answers || readDraft() || {});
     show('scForm'); return;
